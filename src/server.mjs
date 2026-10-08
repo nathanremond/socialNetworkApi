@@ -2,10 +2,13 @@ import express from 'express';
 import mongoose from 'mongoose';
 
 import config from './config.mjs';
+import getEventModel from './models/event.mjs';
+import getEventParticipationModel from './models/event-participation.mjs';
 import getGroupModel from './models/group.mjs';
 import getGroupMembershipModel from './models/group-membership.mjs';
 import getUserModel from './models/user.mjs';
 import createAuthRouter from './routes/auth.mjs';
+import createEventsRouter from './routes/events.mjs';
 import createGroupsRouter from './routes/groups.mjs';
 import createUsersRouter from './routes/users.mjs';
 
@@ -40,7 +43,7 @@ const Server = class Server {
         console.log('MongoDB connected');
     }
 
-    middleware({ User, Group, GroupMembership }) {
+    middleware({ User, Group, GroupMembership, Event, EventParticipation }) {
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
         this.app.use('/api/auth', createAuthRouter({
@@ -52,6 +55,14 @@ const Server = class Server {
             jwtSecret: this.config.jwtSecret
         }));
         this.app.use('/api/groups', createGroupsRouter({
+            Group,
+            GroupMembership,
+            User,
+            jwtSecret: this.config.jwtSecret
+        }));
+        this.app.use('/api/events', createEventsRouter({
+            Event,
+            EventParticipation,
             Group,
             GroupMembership,
             User,
@@ -77,8 +88,16 @@ const Server = class Server {
         const User = getUserModel(this.connect);
         const Group = getGroupModel(this.connect);
         const GroupMembership = getGroupMembershipModel(this.connect);
-        await Promise.all([User.init(), Group.init(), GroupMembership.init()]);
-        this.middleware({ User, Group, GroupMembership });
+        const Event = getEventModel(this.connect);
+        const EventParticipation = getEventParticipationModel(this.connect);
+        await Promise.all([
+            User.init(),
+            Group.init(),
+            GroupMembership.init(),
+            Event.init(),
+            EventParticipation.init()
+        ]);
+        this.middleware({ User, Group, GroupMembership, Event, EventParticipation });
 
         this.httpServer = this.app.listen(this.config.port, () => {
             console.log(`API listening on port ${this.config.port}`);
