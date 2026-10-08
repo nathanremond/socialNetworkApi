@@ -1,12 +1,18 @@
+const port = Number(process.env.PORT || 3000);
+const mongodb = process.env.MONGODB_URI;
+const jwtSecret = process.env.JWT_SECRET;
+
 export default {
     development: {
         type: 'development',
-        port: 3000,
-        mongodb: 'mongodb+srv://personathanremond_db_user:nbWX8WXvTkOQsoNh@socialnetworkapi.4miqvep.mongodb.net/api'
+        port,
+        mongodb,
+        jwtSecret
     },
     production: {
         type: 'production',
-        port: 3000,
-        mongodb: 'mongodb+srv://personathanremond_db_user:nbWX8WXvTkOQsoNh@socialnetworkapi.4miqvep.mongodb.net/api'
+        port,
+        mongodb,
+        jwtSecret
     }
-}
+};
