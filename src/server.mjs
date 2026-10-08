@@ -4,13 +4,17 @@ import mongoose from 'mongoose';
 import config from './config.mjs';
 import getDiscussionMessageModel from './models/discussion-message.mjs';
 import getDiscussionThreadModel from './models/discussion-thread.mjs';
+import getEventAlbumModel from './models/event-album.mjs';
 import getEventModel from './models/event.mjs';
+import getEventPhotoModel from './models/event-photo.mjs';
 import getEventParticipationModel from './models/event-participation.mjs';
 import getGroupModel from './models/group.mjs';
 import getGroupMembershipModel from './models/group-membership.mjs';
+import getPhotoCommentModel from './models/photo-comment.mjs';
 import getUserModel from './models/user.mjs';
 import createAuthRouter from './routes/auth.mjs';
 import createDiscussionRouter from './routes/discussion.mjs';
+import createEventAlbumsRouter from './routes/event-albums.mjs';
 import createEventsRouter from './routes/events.mjs';
 import createGroupsRouter from './routes/groups.mjs';
 import createUsersRouter from './routes/users.mjs';
@@ -53,7 +57,10 @@ const Server = class Server {
         Event,
         EventParticipation,
         DiscussionThread,
-        DiscussionMessage
+        DiscussionMessage,
+        EventAlbum,
+        EventPhoto,
+        PhotoComment
     }) {
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
@@ -95,6 +102,14 @@ const Server = class Server {
             DiscussionMessage,
             jwtSecret: this.config.jwtSecret
         }));
+        this.app.use('/api/events', createEventAlbumsRouter({
+            Event,
+            EventParticipation,
+            EventAlbum,
+            EventPhoto,
+            PhotoComment,
+            jwtSecret: this.config.jwtSecret
+        }));
         this.app.use((error, req, res, next) => {
             console.error('[ERROR] api request ->', error);
             const status = Number.isInteger(error.status) && error.status >= 400 && error.status < 500
@@ -119,6 +134,9 @@ const Server = class Server {
         const EventParticipation = getEventParticipationModel(this.connect);
         const DiscussionThread = getDiscussionThreadModel(this.connect);
         const DiscussionMessage = getDiscussionMessageModel(this.connect);
+        const EventAlbum = getEventAlbumModel(this.connect);
+        const EventPhoto = getEventPhotoModel(this.connect);
+        const PhotoComment = getPhotoCommentModel(this.connect);
         await Promise.all([
             User.init(),
             Group.init(),
@@ -126,7 +144,10 @@ const Server = class Server {
             Event.init(),
             EventParticipation.init(),
             DiscussionThread.init(),
-            DiscussionMessage.init()
+            DiscussionMessage.init(),
+            EventAlbum.init(),
+            EventPhoto.init(),
+            PhotoComment.init()
         ]);
         this.middleware({
             User,
@@ -135,7 +156,10 @@ const Server = class Server {
             Event,
             EventParticipation,
             DiscussionThread,
-            DiscussionMessage
+            DiscussionMessage,
+            EventAlbum,
+            EventPhoto,
+            PhotoComment
         });
 
         this.httpServer = this.app.listen(this.config.port, () => {
