@@ -11,10 +11,13 @@ import getEventParticipationModel from './models/event-participation.mjs';
 import getGroupModel from './models/group.mjs';
 import getGroupMembershipModel from './models/group-membership.mjs';
 import getPhotoCommentModel from './models/photo-comment.mjs';
+import getEventPollModel from './models/event-poll.mjs';
+import getPollResponseModel from './models/poll-response.mjs';
 import getUserModel from './models/user.mjs';
 import createAuthRouter from './routes/auth.mjs';
 import createDiscussionRouter from './routes/discussion.mjs';
 import createEventAlbumsRouter from './routes/event-albums.mjs';
+import createEventPollsRouter from './routes/event-polls.mjs';
 import createEventsRouter from './routes/events.mjs';
 import createGroupsRouter from './routes/groups.mjs';
 import createUsersRouter from './routes/users.mjs';
@@ -60,7 +63,9 @@ const Server = class Server {
         DiscussionMessage,
         EventAlbum,
         EventPhoto,
-        PhotoComment
+        PhotoComment,
+        EventPoll,
+        PollResponse
     }) {
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
@@ -110,6 +115,13 @@ const Server = class Server {
             PhotoComment,
             jwtSecret: this.config.jwtSecret
         }));
+        this.app.use('/api/events', createEventPollsRouter({
+            Event,
+            EventParticipation,
+            EventPoll,
+            PollResponse,
+            jwtSecret: this.config.jwtSecret
+        }));
         this.app.use((error, req, res, next) => {
             console.error('[ERROR] api request ->', error);
             const status = Number.isInteger(error.status) && error.status >= 400 && error.status < 500
@@ -137,6 +149,8 @@ const Server = class Server {
         const EventAlbum = getEventAlbumModel(this.connect);
         const EventPhoto = getEventPhotoModel(this.connect);
         const PhotoComment = getPhotoCommentModel(this.connect);
+        const EventPoll = getEventPollModel(this.connect);
+        const PollResponse = getPollResponseModel(this.connect);
         await Promise.all([
             User.init(),
             Group.init(),
@@ -147,7 +161,9 @@ const Server = class Server {
             DiscussionMessage.init(),
             EventAlbum.init(),
             EventPhoto.init(),
-            PhotoComment.init()
+            PhotoComment.init(),
+            EventPoll.init(),
+            PollResponse.init()
         ]);
         this.middleware({
             User,
@@ -159,7 +175,9 @@ const Server = class Server {
             DiscussionMessage,
             EventAlbum,
             EventPhoto,
-            PhotoComment
+            PhotoComment,
+            EventPoll,
+            PollResponse
         });
 
         this.httpServer = this.app.listen(this.config.port, () => {
