@@ -1,5 +1,6 @@
 import express from 'express';
 import mongoose from 'mongoose';
+import swaggerUi from 'swagger-ui-express';
 
 import config from './config.mjs';
 import getDiscussionMessageModel from './models/discussion-message.mjs';
@@ -24,6 +25,7 @@ import createEventTicketsRouter from './routes/event-tickets.mjs';
 import createEventsRouter from './routes/events.mjs';
 import createGroupsRouter from './routes/groups.mjs';
 import createUsersRouter from './routes/users.mjs';
+import openApiDocument from './docs/openapi.mjs';
 
 const Server = class Server {
     constructor() {
@@ -74,6 +76,12 @@ const Server = class Server {
     }) {
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
+        this.app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiDocument, {
+            explorer: true,
+            swaggerOptions: {
+                persistAuthorization: true
+            }
+        }));
         this.app.use('/api/auth', createAuthRouter({
             User,
             jwtSecret: this.config.jwtSecret
