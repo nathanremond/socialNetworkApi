@@ -2,12 +2,15 @@ import express from 'express';
 import mongoose from 'mongoose';
 
 import config from './config.mjs';
+import getDiscussionMessageModel from './models/discussion-message.mjs';
+import getDiscussionThreadModel from './models/discussion-thread.mjs';
 import getEventModel from './models/event.mjs';
 import getEventParticipationModel from './models/event-participation.mjs';
 import getGroupModel from './models/group.mjs';
 import getGroupMembershipModel from './models/group-membership.mjs';
 import getUserModel from './models/user.mjs';
 import createAuthRouter from './routes/auth.mjs';
+import createDiscussionRouter from './routes/discussion.mjs';
 import createEventsRouter from './routes/events.mjs';
 import createGroupsRouter from './routes/groups.mjs';
 import createUsersRouter from './routes/users.mjs';
@@ -43,7 +46,15 @@ const Server = class Server {
         console.log('MongoDB connected');
     }
 
-    middleware({ User, Group, GroupMembership, Event, EventParticipation }) {
+    middleware({
+        User,
+        Group,
+        GroupMembership,
+        Event,
+        EventParticipation,
+        DiscussionThread,
+        DiscussionMessage
+    }) {
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
         this.app.use('/api/auth', createAuthRouter({
@@ -60,12 +71,28 @@ const Server = class Server {
             User,
             jwtSecret: this.config.jwtSecret
         }));
+        this.app.use('/api/groups', createDiscussionRouter({
+            context: 'group',
+            Group,
+            GroupMembership,
+            DiscussionThread,
+            DiscussionMessage,
+            jwtSecret: this.config.jwtSecret
+        }));
         this.app.use('/api/events', createEventsRouter({
             Event,
             EventParticipation,
             Group,
             GroupMembership,
             User,
+            jwtSecret: this.config.jwtSecret
+        }));
+        this.app.use('/api/events', createDiscussionRouter({
+            context: 'event',
+            Event,
+            EventParticipation,
+            DiscussionThread,
+            DiscussionMessage,
             jwtSecret: this.config.jwtSecret
         }));
         this.app.use((error, req, res, next) => {
@@ -90,14 +117,26 @@ const Server = class Server {
         const GroupMembership = getGroupMembershipModel(this.connect);
         const Event = getEventModel(this.connect);
         const EventParticipation = getEventParticipationModel(this.connect);
+        const DiscussionThread = getDiscussionThreadModel(this.connect);
+        const DiscussionMessage = getDiscussionMessageModel(this.connect);
         await Promise.all([
             User.init(),
             Group.init(),
             GroupMembership.init(),
             Event.init(),
-            EventParticipation.init()
+            EventParticipation.init(),
+            DiscussionThread.init(),
+            DiscussionMessage.init()
         ]);
-        this.middleware({ User, Group, GroupMembership, Event, EventParticipation });
+        this.middleware({
+            User,
+            Group,
+            GroupMembership,
+            Event,
+            EventParticipation,
+            DiscussionThread,
+            DiscussionMessage
+        });
 
         this.httpServer = this.app.listen(this.config.port, () => {
             console.log(`API listening on port ${this.config.port}`);
