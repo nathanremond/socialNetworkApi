@@ -12,12 +12,15 @@ import getGroupModel from './models/group.mjs';
 import getGroupMembershipModel from './models/group-membership.mjs';
 import getPhotoCommentModel from './models/photo-comment.mjs';
 import getEventPollModel from './models/event-poll.mjs';
+import getEventTicketModel from './models/event-ticket.mjs';
+import getEventTicketTypeModel from './models/event-ticket-type.mjs';
 import getPollResponseModel from './models/poll-response.mjs';
 import getUserModel from './models/user.mjs';
 import createAuthRouter from './routes/auth.mjs';
 import createDiscussionRouter from './routes/discussion.mjs';
 import createEventAlbumsRouter from './routes/event-albums.mjs';
 import createEventPollsRouter from './routes/event-polls.mjs';
+import createEventTicketsRouter from './routes/event-tickets.mjs';
 import createEventsRouter from './routes/events.mjs';
 import createGroupsRouter from './routes/groups.mjs';
 import createUsersRouter from './routes/users.mjs';
@@ -65,7 +68,9 @@ const Server = class Server {
         EventPhoto,
         PhotoComment,
         EventPoll,
-        PollResponse
+        PollResponse,
+        EventTicketType,
+        EventTicket
     }) {
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
@@ -94,6 +99,8 @@ const Server = class Server {
         this.app.use('/api/events', createEventsRouter({
             Event,
             EventParticipation,
+            EventTicketType,
+            EventTicket,
             Group,
             GroupMembership,
             User,
@@ -120,6 +127,13 @@ const Server = class Server {
             EventParticipation,
             EventPoll,
             PollResponse,
+            jwtSecret: this.config.jwtSecret
+        }));
+        this.app.use('/api/events', createEventTicketsRouter({
+            Event,
+            EventParticipation,
+            EventTicketType,
+            EventTicket,
             jwtSecret: this.config.jwtSecret
         }));
         this.app.use((error, req, res, next) => {
@@ -151,6 +165,8 @@ const Server = class Server {
         const PhotoComment = getPhotoCommentModel(this.connect);
         const EventPoll = getEventPollModel(this.connect);
         const PollResponse = getPollResponseModel(this.connect);
+        const EventTicketType = getEventTicketTypeModel(this.connect);
+        const EventTicket = getEventTicketModel(this.connect);
         await Promise.all([
             User.init(),
             Group.init(),
@@ -163,7 +179,9 @@ const Server = class Server {
             EventPhoto.init(),
             PhotoComment.init(),
             EventPoll.init(),
-            PollResponse.init()
+            PollResponse.init(),
+            EventTicketType.init(),
+            EventTicket.init()
         ]);
         this.middleware({
             User,
@@ -177,7 +195,9 @@ const Server = class Server {
             EventPhoto,
             PhotoComment,
             EventPoll,
-            PollResponse
+            PollResponse,
+            EventTicketType,
+            EventTicket
         });
 
         this.httpServer = this.app.listen(this.config.port, () => {

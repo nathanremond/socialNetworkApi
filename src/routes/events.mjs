@@ -87,6 +87,8 @@ export default function createEventsRouter({
     Group,
     GroupMembership,
     User,
+    EventTicketType,
+    EventTicket,
     jwtSecret
 }) {
     const router = Router();
@@ -257,6 +259,8 @@ export default function createEventsRouter({
 
     router.delete('/:eventId', authenticate, loadEvent, requireOrganizer, async (req, res) => {
         await EventParticipation.deleteMany({ eventId: req.event.id });
+        await EventTicket.deleteMany({ eventId: req.event.id });
+        await EventTicketType.deleteMany({ eventId: req.event.id });
         await req.event.deleteOne();
         return res.status(204).end();
     });
