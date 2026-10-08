@@ -2,8 +2,11 @@ import express from 'express';
 import mongoose from 'mongoose';
 
 import config from './config.mjs';
+import getGroupModel from './models/group.mjs';
+import getGroupMembershipModel from './models/group-membership.mjs';
 import getUserModel from './models/user.mjs';
 import createAuthRouter from './routes/auth.mjs';
+import createGroupsRouter from './routes/groups.mjs';
 import createUsersRouter from './routes/users.mjs';
 
 const Server = class Server {
@@ -37,7 +40,7 @@ const Server = class Server {
         console.log('MongoDB connected');
     }
 
-    middleware(User) {
+    middleware({ User, Group, GroupMembership }) {
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
         this.app.use('/api/auth', createAuthRouter({
@@ -45,6 +48,12 @@ const Server = class Server {
             jwtSecret: this.config.jwtSecret
         }));
         this.app.use('/api/users', createUsersRouter({
+            User,
+            jwtSecret: this.config.jwtSecret
+        }));
+        this.app.use('/api/groups', createGroupsRouter({
+            Group,
+            GroupMembership,
             User,
             jwtSecret: this.config.jwtSecret
         }));
@@ -66,8 +75,10 @@ const Server = class Server {
 
         await this.dbConnect();
         const User = getUserModel(this.connect);
-        await User.init();
-        this.middleware(User);
+        const Group = getGroupModel(this.connect);
+        const GroupMembership = getGroupMembershipModel(this.connect);
+        await Promise.all([User.init(), Group.init(), GroupMembership.init()]);
+        this.middleware({ User, Group, GroupMembership });
 
         this.httpServer = this.app.listen(this.config.port, () => {
             console.log(`API listening on port ${this.config.port}`);

@@ -1,12 +1,14 @@
 import jwt from 'jsonwebtoken';
 
-export default function requireAuth(jwtSecret) {
+function authenticateRequest(jwtSecret, required) {
     return (req, res, next) => {
         const authorization = req.get('authorization');
         const match = authorization?.match(/^Bearer\s+(.+)$/i);
 
         if (!match) {
-            return res.status(401).json({ error: 'Authentication required' });
+            return required
+                ? res.status(401).json({ error: 'Authentication required' })
+                : next();
         }
 
         try {
@@ -25,4 +27,12 @@ export default function requireAuth(jwtSecret) {
             return res.status(401).json({ error: 'Invalid or expired token' });
         }
     };
+}
+
+export function optionalAuth(jwtSecret) {
+    return authenticateRequest(jwtSecret, false);
+}
+
+export default function requireAuth(jwtSecret) {
+    return authenticateRequest(jwtSecret, true);
 }
